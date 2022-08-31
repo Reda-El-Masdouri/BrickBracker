@@ -19,25 +19,28 @@ public class GamePlay extends JPanel implements Runnable, KeyListener, ActionLis
 	
 	Thread gameThread;
 	Image image;
+	WinGame win = new WinGame(GAME_WIDTH, GAME_HEIGHT);
 	Graphics graphics;
 	Random random;
 	Paddle paddle;
 	Ball ball;
-	//Score score;
-	
+	Score score = new Score(GAME_WIDTH, GAME_HEIGHT);
+	GameOver gameOver;
 	GamePlay(){
 		newPaddle();
 		newBall();
+		
 		this.setFocusable(true);// if we press a key it going have focus
 		this.addKeyListener(new AL());
 		this.setPreferredSize(SCREEN_SIZE); // a Dimension -> SCREEN_SIZE
 		
-		table = new MapGenerator(3,7);
+		newTable();
 		
 		gameThread = new Thread(this);
 		gameThread.start();
 		
 	}
+	
 	public void newBall() {
 		random = new Random();
 		int randomPosYBall = random.nextInt((int)(GAME_HEIGHT-BALL_DIAMETER)/2, GAME_HEIGHT-BALL_DIAMETER); // for the middle ->(GAME_HEIGHT-BALL_DIAMETER)/2
@@ -46,6 +49,9 @@ public class GamePlay extends JPanel implements Runnable, KeyListener, ActionLis
 	public void newPaddle() {
 		paddle = new Paddle((GAME_WIDTH/2)-(PADDLE_HEIGHT/2), GAME_HEIGHT-PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_WIDTH);
 		
+	}
+	public void newTable() {
+		table = new MapGenerator(3,7);
 	}
 	public void paint(Graphics g) {
 		image = createImage(getWidth(), getHeight()); 
@@ -57,7 +63,20 @@ public class GamePlay extends JPanel implements Runnable, KeyListener, ActionLis
 		paddle.draw(g);
 		ball.draw(g);
 		table.draw((Graphics2D)g);
-		//score.draw(g);
+		score.draw(g);
+		// bounce ball of bottom window edges:
+		if(ball.y >= (GAME_HEIGHT-BALL_DIAMETER)) {
+			gameOver = new GameOver(score.player,GAME_WIDTH, GAME_HEIGHT);
+			ball.setYDirection(0);
+			ball.setXDirection(0);
+			
+			gameOver.draw(g);
+		}
+		if(TOTAL_BRICKES == 0) {
+			ball.setYDirection(0);
+			ball.setXDirection(0);
+			win.draw(g);
+		}
 	}
 	
 	@Override
@@ -119,10 +138,7 @@ public class GamePlay extends JPanel implements Runnable, KeyListener, ActionLis
 		if(ball.x >= GAME_WIDTH-BALL_DIAMETER) {
 			ball.setXDirection(-ball.xVelocity);
 		}
-		// bounce ball of bottom window edges:
-		if(ball.y >= (GAME_HEIGHT-BALL_DIAMETER)) {
-			ball.setYDirection(-ball.yVelocity);
-		}
+		
 		// bounces ball of paddle: we use the intersects method of Rectangle class
 		if(ball.intersects(paddle)) {
 			ball.yVelocity++;// optional for more difficulty
@@ -149,12 +165,14 @@ public class GamePlay extends JPanel implements Runnable, KeyListener, ActionLis
 					if(ball.intersects(brickRectangle)) {
 						table.setBrickValue(0, i, j);
 						TOTAL_BRICKES--;
-						//score += 5;
-						if(ball.x+BALL_DIAMETER <= brickRectangle.x || ball.x >= brickRectangle.x+brickRectangle.width) {
-							ball.setXDirection(-ball.xVelocity);		
+						score.player += 5;
+						if(ball.y <= brickRectangle.y - BALL_DIAMETER || ball.y >= brickRectangle.y+brickRectangle.height) {
+							
+							ball.setYDirection(-ball.yVelocity);
+							
 						}
 						else {
-							ball.setYDirection(-ball.yVelocity);
+							ball.setXDirection(-ball.xVelocity);
 						}
 						break A;
 					}
@@ -170,6 +188,15 @@ public class GamePlay extends JPanel implements Runnable, KeyListener, ActionLis
 			public void keyPressed(KeyEvent e) {
 				paddle.keyPressed(e);
 				
+				if(ball.xVelocity == 0 && ball.yVelocity == 0) {
+					if(e.getKeyCode()==KeyEvent.VK_ENTER) {
+						newBall();
+						newPaddle();
+						newTable();
+						score.player = 0;
+						TOTAL_BRICKES = 21;
+					}
+				}
 			}
 			public void keyReleased(KeyEvent e) {
 				paddle.keyReleased(e);
