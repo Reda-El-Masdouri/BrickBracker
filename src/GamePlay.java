@@ -166,13 +166,22 @@ public class GamePlay extends JPanel implements Runnable, KeyListener, ActionLis
 						table.setBrickValue(0, i, j);
 						TOTAL_BRICKES--;
 						score.player += 5;
-						if(ball.y <= brickRectangle.y - BALL_DIAMETER || ball.y >= brickRectangle.y+brickRectangle.height) {
-							
-							ball.setYDirection(-ball.yVelocity);
-							
-						}
-						else {
+						
+						if(brickRectangle.x + brickRectangle.width <= ball.x+1) {
+							//System.out.println("1");
 							ball.setXDirection(-ball.xVelocity);
+						}
+						else if(ball.x+BALL_DIAMETER-1 <= brickRectangle.x) {
+							//System.out.println("2");
+							ball.setXDirection(-ball.xVelocity);
+						}
+						/*else if(brickRectangle.y + brickRectangle.height >= ball.y){
+							System.out.println("3");
+							ball.setYDirection(-ball.yVelocity);
+						}*/
+						else {
+							//System.out.println("4");
+							ball.setYDirection(-ball.yVelocity);
 						}
 						break A;
 					}
